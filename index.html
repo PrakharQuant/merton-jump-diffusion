@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Simplified Merton Jump Diffusion | Prakhar Gupta</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #38bdf8;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    padding: 1.2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .credit {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .credit a { color: white; text-decoration: none; margin: 0 0.4rem; }
+  .credit a:hover { opacity: 0.85; }
+  .credit i { font-size: 1.4rem; vertical-align: middle; }
+  .email { font-size: 0.95rem; opacity: 0.95; }
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  h1 { font-size: 2.4rem; margin: 0.5rem 0 1rem; text-align: center; }
+  h2 { color: var(--accent); border-bottom: 2px solid #334155; padding-bottom: 0.4rem; margin-top: 2.5rem; }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  code, pre {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 0.2rem 0.4rem;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+  }
+  pre {
+    padding: 1rem;
+    overflow-x: auto;
+    border: 1px solid #334155;
+  }
+  .formula { font-size: 1.1rem; text-align: center; margin: 1.2rem 0; }
+  .highlight { background: #1e3a5f; padding: 0.8rem 1rem; border-left: 4px solid var(--accent); border-radius: 6px; }
+  footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="credit">
+    Prakhar Gupta &nbsp;|&nbsp; <span class="email">bestofprakhar@gmail.com</span>
+    &nbsp;&nbsp;
+    <a href="https://www.linkedin.com/in/prakhar-gupta-5b7250372/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+    <a href="https://x.com/PrakharQuant" target="_blank" title="X / Twitter"><i class="fab fa-x-twitter"></i></a>
+  </div>
+</div>
+
+<div class="container">
+  <h1>Merton Jump Diffusion<br><span style="font-size:1.1rem;font-weight:400;color:var(--accent);">The Massive Upgrade to Black-Scholes — Super Simplified</span></h1>
+
+  <div class="card highlight">
+    <strong>One-sentence version:</strong> Black-Scholes is continuous random walk. Merton adds sudden jumps (crashes, surprises). You still get a closed-form formula — just a weighted average of Black-Scholes prices.
+  </div>
+
+  <h2>Why Black-Scholes Is Incomplete</h2>
+  <ul>
+    <li>Assumes prices move smoothly and continuously</li>
+    <li>Cannot produce fat tails or volatility smiles</li>
+    <li>Fails during crashes and big news events</li>
+  </ul>
+
+  <h2>Merton's Brilliant Idea (1976)</h2>
+  <p>Keep the continuous geometric Brownian motion, but add a <strong>compound Poisson jump process</strong>:</p>
+  <div class="formula">
+    \[
+    \frac{dS_t}{S_{t-}} = (r - \lambda \bar{k})\,dt + \sigma\,dW_t + (Y-1)\,dN_t
+    \]
+  </div>
+  <ul>
+    <li>\(N_t\) = Poisson process with intensity \(\lambda\) (expected jumps per year)</li>
+    <li>\(Y\) = jump multiplier, \(\ln Y \sim \mathcal{N}(\mu_J, \sigma_J^2)\)</li>
+    <li>\(\bar{k} = \mathbb{E}[Y-1] = e^{\mu_J + \frac12\sigma_J^2} - 1\) (compensator so discounted stock is a martingale)</li>
+  </ul>
+
+  <h2>The Closed-Form Magic</h2>
+  <p>Conditional on exactly \(n\) jumps, the stock is still log-normal → Black-Scholes still works, just with adjusted volatility and rate.</p>
+  <div class="formula">
+    \[
+    C = \sum_{n=0}^{\infty} \frac{e^{-\lambda' T}(\lambda' T)^n}{n!}\, \text{BS}(S, K, T, r_n, \sigma_n)
+    \]
+  </div>
+  where
+  \[
+  \lambda' = \lambda(1+\bar{k}), \quad
+  \sigma_n = \sqrt{\sigma^2 + \frac{n\sigma_J^2}{T}}, \quad
+  r_n = r - \lambda\bar{k} + \frac{n(\mu_J + \tfrac12\sigma_J^2)}{T}
+  \]
+  <p>In practice you only need the first 20–50 terms. Extremely fast.</p>
+
+  <h2>Super Simple Python Implementation</h2>
+  <pre><code>from merton import merton_call
+
+price = merton_call(
+    S=100, K=100, T=1.0, r=0.05,
+    sigma=0.2,          # continuous vol
+    lam=1.0,            # jumps per year
+    mu_j=-0.10,         # mean log-jump
+    sigma_j=0.30        # jump volatility
+)
+print(f"Merton Call: {price:.4f}")</code></pre>
+  <p>No external dependencies beyond the standard library. See <code>merton.py</code> for the full clean code.</p>
+
+  <h2>Typical Effect</h2>
+  <div class="card">
+    With the parameters above you usually get a higher call price than pure Black-Scholes. The difference is the <strong>jump risk premium</strong> — you cannot perfectly hedge jumps, so options cost more.
+  </div>
+
+  <h2>Parameters You Control</h2>
+  <ul>
+    <li><strong>\(\sigma\)</strong> — continuous (diffusion) volatility</li>
+    <li><strong>\(\lambda\)</strong> — how often jumps happen</li>
+    <li><strong>\(\mu_J\)</strong> — average size/direction of jumps (negative = crash bias)</li>
+    <li><strong>\(\sigma_J\)</strong> — how variable the jump sizes are</li>
+  </ul>
+
+  <h2>When to Use This</h2>
+  <ul>
+    <li>You want better smiles and fat tails than Black-Scholes</li>
+    <li>You need a closed form (not Monte Carlo or FFT)</li>
+    <li>You want something simple enough to explain and implement in an afternoon</li>
+  </ul>
+
+  <div class="card" style="text-align:center; margin-top:3rem;">
+    <strong>Star the repo · Fork it · Use it</strong><br>
+    <a href="https://github.com/PrakharQuant/simple-merton-jump-diffusion" style="color:var(--accent);">github.com/PrakharQuant/simple-merton-jump-diffusion</a>
+  </div>
+</div>
+
+<footer>
+  Super simplified by Prakhar Gupta &nbsp;|&nbsp; bestofprakhar@gmail.com &nbsp;|&nbsp;
+  <a href="https://www.linkedin.com/in/prakhar-gupta-5b7250372/" style="color:var(--accent);">LinkedIn</a> &nbsp;
+  <a href="https://x.com/PrakharQuant" style="color:var(--accent);">X</a>
+</footer>
+
+</body>
+</html>
